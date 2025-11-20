@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { GitBranch, FolderGit2, Plus, Trash2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,7 +11,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
-import { api, WorktreeInfo, RepoInfo } from '@/lib/api';
+import { api } from '@/lib/api';
+import type { RepoInfo } from '@/lib/api';
+import { CommitSquasher } from '@/components/CommitSquasher';
 
 function App() {
   const [repoPath, setRepoPath] = useState('');
@@ -293,6 +295,9 @@ function App() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Commit Squasher */}
+            <CommitSquasher repoPath={repoPath} />
           </>
         )}
       </div>
