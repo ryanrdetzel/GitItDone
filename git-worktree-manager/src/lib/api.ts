@@ -22,6 +22,44 @@ export interface BranchInfo {
   branches: Record<string, any>;
 }
 
+export interface FileStatus {
+  path: string;
+  status: 'modified' | 'created' | 'deleted' | 'renamed';
+  from?: string;
+}
+
+export interface RepoStatus {
+  files: FileStatus[];
+  staged: string[];
+  isClean: boolean;
+}
+
+export interface Commit {
+  hash: string;
+  shortHash: string;
+  message: string;
+  author: string;
+  date: string;
+  refs: string;
+}
+
+export interface CommitLog {
+  commits: Commit[];
+}
+
+export interface DiffHunk {
+  header: string;
+  lines: string[];
+  startLine: number;
+  endLine: number;
+}
+
+export interface FileDiff {
+  filePath: string;
+  diff: string;
+  hunks: DiffHunk[];
+}
+
 export const api = {
   async getRepoInfo(repoPath: string): Promise<RepoInfo> {
     const response = await fetch(`${API_BASE}/repo/info`, {
@@ -120,6 +158,110 @@ export const api = {
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Failed to checkout branch');
+    }
+
+    return response.json();
+  },
+
+  async getStatus(repoPath: string): Promise<RepoStatus> {
+    const response = await fetch(`${API_BASE}/repo/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ repoPath }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to get repository status');
+    }
+
+    return response.json();
+  },
+
+  async getLog(repoPath: string, maxCount: number = 50): Promise<CommitLog> {
+    const response = await fetch(`${API_BASE}/repo/log`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ repoPath, maxCount }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to get commit log');
+    }
+
+    return response.json();
+  },
+
+  async getDiff(
+    repoPath: string,
+    filePath: string,
+    staged: boolean = false
+  ): Promise<FileDiff> {
+    const response = await fetch(`${API_BASE}/repo/diff`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ repoPath, filePath, staged }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to get file diff');
+    }
+
+    return response.json();
+  },
+
+  async stageChanges(
+    repoPath: string,
+    filePath: string,
+    hunk?: string
+  ): Promise<{ success: boolean; message: string }> {
+    const response = await fetch(`${API_BASE}/repo/stage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ repoPath, filePath, hunk }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to stage changes');
+    }
+
+    return response.json();
+  },
+
+  async createFixup(
+    repoPath: string,
+    targetCommit: string
+  ): Promise<{ success: boolean; message: string }> {
+    const response = await fetch(`${API_BASE}/repo/fixup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ repoPath, targetCommit }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to create fixup commit');
+    }
+
+    return response.json();
+  },
+
+  async rebase(
+    repoPath: string,
+    targetCommit: string
+  ): Promise<{ success: boolean; message: string }> {
+    const response = await fetch(`${API_BASE}/repo/rebase`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ repoPath, targetCommit }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to rebase');
     }
 
     return response.json();
